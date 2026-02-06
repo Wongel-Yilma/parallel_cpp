@@ -15,6 +15,7 @@ struct ThreadArguments {
 };
 
 double* get_bin_limits(int min, int max, int bin_count);
+void*  bin_per_thread(void* arguments);
 int main(){
     srand(100);
     thread_count = 4;
@@ -27,21 +28,52 @@ int main(){
     for (int j=0; j<array_size;j++) array[j]=rand()%(max_val-min_val)+min_val;
     int histogram[bin_count]={0};
     double* bin_limits = get_bin_limits(min_val, max_val,bin_count);
+    pthread_mutex_t mutex;
+    pthread_mutex_init(&mutex, NULL);
+    long thread;    
+    pthread_t* thread_handles;
+    thread_handles = (pthread_t*)malloc(thread_count*sizeof(pthread_t));
+    // Easier to use struct to pass data for each thread (more organized)
+    ThreadArguments* thread_args = new ThreadArguments[thread_count];
+    for (thread=0; thread<thread_count; thread++){
+        thread_args[thread].my_rank = thread;
+        thread_args[thread].bin_count = bin_count;
+        thread_args[thread].data_count = array_size;
+        thread_args[thread].array = array;
+        thread_args[thread].bin_limits = bin_limits;
+        thread_args[thread].histogram = histogram;
+        thread_args[thread].mutex = &mutex;
 
-    for (int i = 0; i<array_size; i++){
-        for (int j=1; j<bin_count+1;j++){
-            if (array[i]<bin_limits[j]){
-                histogram[j-1]++;
-                break;
-            }
-        }
+
+        pthread_create(&thread_handles[thread], NULL, bin_per_thread,(void* )(&thread_args[thread]));
     }
+
+    
+    // serial implementation
+
+    // for (int i = 0; i<array_size; i++){
+    //     for (int j=1; j<bin_count+1;j++){
+    //         if (array[i]<bin_limits[j]){
+    //             histogram[j-1]++;
+    //             break;
+    //         }
+    //     }
+    // }
+
+    for (thread=0; thread<thread_count; thread++){
+
+        pthread_join(thread_handles[thread], NULL);
+    }
+
     for (int j=0; j<bin_count;j++){
         printf("%d\n", histogram[j]);
     }
 
 
     delete[] bin_limits;
+    delete[] thread_handles;
+    delete[] thread_args;
+    // pthread_mutexattr_destroy(mutex);
     return 0 ;
 }
 
