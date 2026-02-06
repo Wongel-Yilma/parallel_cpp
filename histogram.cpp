@@ -73,7 +73,7 @@ int main(){
     delete[] bin_limits;
     delete[] thread_handles;
     delete[] thread_args;
-    // pthread_mutexattr_destroy(mutex);
+    pthread_mutex_destroy(&mutex);
     return 0 ;
 }
 
