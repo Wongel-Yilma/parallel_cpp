@@ -96,7 +96,7 @@ void*  bin_per_thread(void* arguments){
     pthread_mutex_t* mutex = thread_args->mutex;
 
     int* local_histogram = new int [bin_count]();
-    int el_per_thread = data_count/bin_count;
+    int el_per_thread = data_count/thread_count;
     int first_idx = my_rank*el_per_thread;
     int last_idx = first_idx+el_per_thread;
 
