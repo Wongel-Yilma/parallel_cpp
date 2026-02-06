@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <cmath>
 #include <iostream>
+#include <chrono>
 
 // A struct to pass arguments to per thread function (for cleaner code purpose)
 struct ThreadArguments {
@@ -13,7 +14,7 @@ struct ThreadArguments {
     double* bin_limits;
     int* global_histogram;
     int* tree_struct_histogram;
-    int** local_histogram;
+    int** local_histogram; // Created 2 dimensional local_histogram so that multiple threads can have access and send message to one another
     pthread_mutex_t* mutex;
     int* divisors;
     int divisor_length;
@@ -67,6 +68,9 @@ int main(int argn, char* argv[]){
     // Create an array of struct (for multiple threads)
     ThreadArguments* thread_args = new ThreadArguments[thread_count];
 
+    // Start the timer
+    auto start = std::chrono::steady_clock::now();
+
     // SPAWNING multiple threads (# of thread_count)
     // Easier to use struct to pass data for each thread (more organized)
     for (thread=0; thread<thread_count; thread++){
@@ -90,6 +94,10 @@ int main(int argn, char* argv[]){
     for (thread=0; thread<thread_count; thread++){
         pthread_join(thread_handles[thread], NULL);
     }
+   
+    auto end = std::chrono::steady_clock::now();
+    auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end-start);
+
     // Print results for the global sum
     std::cout<<"Global Sum"<< std::endl;
     std::cout<<"bin_maxes: ";
@@ -117,6 +125,7 @@ int main(int argn, char* argv[]){
     }
     std::cout<<std::endl;
 
+    std::cout<<"Elapsed time:"<< elapsed_ms.count()<<" ms"<<std::endl;
 
     // Clean up before exiting
     for (int j=0; j<thread_count; j++){
