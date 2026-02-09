@@ -10,7 +10,7 @@ struct ThreadArguments {
     int my_rank;
     int bin_count;
     int data_count;
-    int* array;
+    double* array;
     double* bin_limits;
     int* global_histogram;
     int* tree_struct_histogram;
@@ -21,7 +21,7 @@ struct ThreadArguments {
 };
 
 // Predefining the functions to be defined 
-double* get_bin_limits(int min, int max, int bin_count);
+double* get_bin_limits(double min, double max, int bin_count);
 void*  bin_per_thread(void* arguments);
 
 // Creating a global variables for total thread number and barrier
@@ -35,8 +35,8 @@ int main(int argn, char* argv[]){
     // Extracting command line arguments (thread_count, bin_count, min_value, max_value and length of the array)
     thread_count = std::stoi(argv[1]);
     const int bin_count = std::stoi(argv[2]);
-    int min_val = std::stoi(argv[3]);
-    int max_val = std::stoi(argv[4]);
+    double min_val = std::stoi(argv[3]);
+    double max_val = std::stoi(argv[4]);
     const int data_count  = std::stoi(argv[5]);
     // Set seed for the random number generator
     
@@ -47,8 +47,8 @@ int main(int argn, char* argv[]){
     
     // Create measurement array and populate the array with random numbers with in the given range
     srand(100);
-    int array [data_count];
-    for (int j=0; j<data_count;j++) array[j]=rand()%(max_val-min_val)+min_val;
+    double* array = new double[data_count]();
+    for (int j=0; j<data_count;j++) array[j]= (double)rand()*(max_val-min_val)/RAND_MAX+min_val;
 
     // Initialize the local_sum, global_sum and tree structured sum histograms (to be passed to each thread)
     int* global_histogram =  new int[bin_count]();
@@ -90,7 +90,7 @@ int main(int argn, char* argv[]){
         pthread_create(&thread_handles[thread], NULL, bin_per_thread,(void* )(&thread_args[thread]));
     }
 
-    // Joint the threads
+    // Join the threads
     for (thread=0; thread<thread_count; thread++){
         pthread_join(thread_handles[thread], NULL);
     }
@@ -132,7 +132,7 @@ int main(int argn, char* argv[]){
         delete[] local_histogram[j];
     }
     delete[] local_histogram;
-
+    delete[] array;
     delete[] bin_limits;
     delete[] thread_handles;
     delete[] thread_args;
@@ -140,7 +140,7 @@ int main(int argn, char* argv[]){
     return 0 ;
 }
 
-double* get_bin_limits(int min, int max, int bin_count){
+double* get_bin_limits(double min, double max, int bin_count){
     double* bin_limits = new double[bin_count+1];
     double interval = static_cast<double>(max-min)/static_cast<double>(bin_count);
     for (int i=0; i<=bin_count; i++){
@@ -149,11 +149,12 @@ double* get_bin_limits(int min, int max, int bin_count){
     return bin_limits;
 }
 void*  bin_per_thread(void* arguments){
+    // Extract per thread data
     ThreadArguments* thread_args = (ThreadArguments*) arguments;
     int my_rank = thread_args->my_rank;
     int bin_count = thread_args->bin_count;
     int data_count = thread_args->data_count;
-    int* array = thread_args->array;
+    double* array = thread_args->array;
     double* bin_limits = thread_args->bin_limits;
     int* global_histogram = thread_args-> global_histogram;
     int** local_histogram = thread_args-> local_histogram;
