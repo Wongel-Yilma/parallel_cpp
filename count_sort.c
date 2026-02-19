@@ -31,19 +31,23 @@ int main(int argn, char * argv[]){
 void count_sort(int a [], int n){
     int i, j, count;
     int *temp = malloc(n*sizeof(int));
-#pragma omp parallel for num_threads(2) private(j, count) shared (temp,a, n)
-{
-    for(i=0; i<n; i++){
-        count=0;
-        for(j =0; j<n;j++){
-            if (a[i]>a[j]) count++;
-            else if(a[i]==a[j]&& i>j) count++;
+    #pragma omp parallel num_threads(thread_count) private(j, count) shared (temp,a, n)
+    {    
+        #pragma omp for 
+            for(i=0; i<n; i++){
+                count=0;
+                for(j =0; j<n;j++){
+                    if (a[i]>a[j]) count++;
+                    else if(a[i]==a[j]&& i>j) count++;
+                }
+                temp[count] =a[i];
+            }
+        #pragma omp for
+        for(i=0; i<n; i++){ 
+            a[i] = temp[i];
         }
-#pragma critical
-        temp[count] =a[i];
-    }
-}
+    }    
+// memcpy(a, temp , n*sizeof(int));
 
-    memcpy(a, temp , n*sizeof(int));
     free(temp);
 }
