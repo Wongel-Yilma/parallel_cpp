@@ -6,10 +6,11 @@
 #include <omp.h>
 #endif
 void count_sort(int* , int);
+int thread_count;
 
 int main(int argn, char * argv[]){
-    // int n = strtol(argv[1],NULL,10);
-    int n = 20;
+    thread_count = strtol(argv[1],NULL,10);
+    int n = strtol(argv[2],NULL,10);
     srand(100);
     int * arr = malloc(n*sizeof(int));
     printf("Original array: ");
@@ -30,14 +31,18 @@ int main(int argn, char * argv[]){
 void count_sort(int a [], int n){
     int i, j, count;
     int *temp = malloc(n*sizeof(int));
+#pragma omp parallel for num_threads(2) private(j, count) shared (temp,a, n)
+{
     for(i=0; i<n; i++){
         count=0;
         for(j =0; j<n;j++){
             if (a[i]>a[j]) count++;
             else if(a[i]==a[j]&& i>j) count++;
         }
+#pragma critical
         temp[count] =a[i];
     }
+}
 
     memcpy(a, temp , n*sizeof(int));
     free(temp);
