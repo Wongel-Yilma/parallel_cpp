@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -11,15 +10,12 @@ int main(){
 
     double pi = 0;
     int i;
-#pragma omp parallel num_threads(4) private(i)  shared( MAX_N) reduction(+:pi) 
-    {
-    double local_pi = 0.0;
-#pragma omp for
+    double factor = 1.0;
+#pragma omp parallel for num_threads(8) private(i, factor)  shared( MAX_N) reduction(+:pi) 
     for ( i = 0; i<MAX_N; i++){
-        local_pi+=pow(-1.0,i)/(2*i+1);
+        factor = (i%2==0)? 1.0 : -1.0;
+        pi+=factor/(2*i+1);
     }
-    pi+=local_pi;
-}
     pi*=4;
     printf("Pi: %f\n", pi);
 
