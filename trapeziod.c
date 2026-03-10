@@ -18,9 +18,15 @@ int main(int argn , char *argv[]){
     double a = strtof(argv[2], NULL); 
     double b = strtof(argv[3], NULL); 
     int n = strtol(argv[4], NULL, 10); 
-    double global_approx;
-#pragma omp parallel num_threads(thread_count)
-    Trapz(a,b,n,&global_approx);
+    double h = (b-a)/n;
+    double global_approx = (f(a)+f(b))/2;
+    int i;
+#pragma omp parallel for num_threads(thread_count) default(none) private(i) shared(a,n, h) reduction(+:global_approx)
+    for (i=1; i<n;i++){
+        global_approx+=f(a+i*h);
+    }
+    global_approx*=h;
+    // Trapz(a,b,n,&global_approx);
     
     printf("Aprroximation: %f \n", global_approx);
     return 0;
@@ -28,7 +34,7 @@ int main(int argn , char *argv[]){
 
 double f(double x){
     // return cos(x);
-    return x;
+    return cos(x);
 }
 void Trapz(double a , double b, int n, double* global_approx_ptr){
 #ifdef _OPENMP
@@ -56,7 +62,7 @@ void Trapz(double a , double b, int n, double* global_approx_ptr){
     // printf("ranks %d %d\n", my_rank, num_threads);
 
 
-#pragma omp critical
-    *global_approx_ptr+=local_approx;
+// #pragma omp critical
+//     *global_approx_ptr+=local_approx;
     
 }
