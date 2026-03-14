@@ -22,17 +22,8 @@ int main(){
     local_b = local_a+h*local_n;
     local_int = Trapz( local_n,  local_a,  local_b,  h);
 
-    if (my_rank!=0){
-        MPI_Send(&local_int, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
-    }
-    else if (my_rank==0){
-        global_int = local_int;
-        for (int q=1; q<comm_sz;q++){
-            MPI_Recv(&local_int, 1, MPI_DOUBLE, q, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            global_int+=local_int;
-        }
-        printf("Total area: %f\n", global_int);
-    }
+    MPI_Reduce(&local_int, &global_int, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (my_rank==0) printf("Total area: %f\n", global_int);
     MPI_Finalize();
     return 0;
 }
