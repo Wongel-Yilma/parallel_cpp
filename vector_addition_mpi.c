@@ -4,8 +4,9 @@
 
 void Generate_vector(double*, int , int, int , MPI_Comm);
 void Add_vectors(double*, double*, double*, int);
+void Print_full_vector(int ,double* , int ,int  );
 int main(){
-    int my_rank, comm_sz, n = 1024 , local_n,i;
+    int my_rank, comm_sz, n = 8 , local_n,i;
     double* local_a;
     double* local_b;
     double* local_c;
@@ -19,8 +20,10 @@ int main(){
 
     Generate_vector(local_a, local_n, n, my_rank, MPI_COMM_WORLD);
     Generate_vector(local_b, local_n, n, my_rank, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
     Add_vectors(local_a, local_b, local_c, local_n);
+    MPI_Barrier(MPI_COMM_WORLD);
+    Print_full_vector(my_rank, local_c, local_n, n);
+
     printf("Rank %d has %d number of elements\n", my_rank, local_n);
 
     MPI_Finalize();
@@ -46,4 +49,17 @@ void Add_vectors(double* a, double* b, double* c, int n){
     
 }
 
+void Print_full_vector(int my_rank,double* local_c, int local_n,int n ){
+    double* b = NULL;
+    int k;
+    if (my_rank==0){
+        b = malloc(n*sizeof(double));
+    }
+    MPI_Gather(local_c, local_n, MPI_DOUBLE, b, local_n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    if (my_rank==0){
+        for (k = 0; k < n; k++)
+            printf("%f ", b[k]);
+    }
+
+}
 
