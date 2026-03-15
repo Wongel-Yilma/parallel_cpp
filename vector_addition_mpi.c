@@ -40,6 +40,7 @@ void Generate_vector(double* local_a, int local_n, int n, int my_rank, MPI_Comm 
         printf("Rank %d has created %d number of elements\n", my_rank,n);
     }
     MPI_Scatter(a, local_n, MPI_DOUBLE, local_a,local_n, MPI_DOUBLE, 0, comm);
+    free(a);
 }
 void Add_vectors(double* a, double* b, double* c, int n){
     int k ;
@@ -60,6 +61,7 @@ void Print_full_vector(int my_rank,double* local_c, int local_n,int n ){
         for (k = 0; k < n; k++)
             printf("%f ", b[k]);
     }
+    free(b);
 
 }
 
