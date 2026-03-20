@@ -15,7 +15,7 @@ int main(int argn, char* argv []){
     int bin_count, data_count, local_count;     // histogram variables: data count-> Total , local_count-> number of data per MPI rank
     double min_meas, max_meas;                  // Minimum and Maximum values of the data array to be generated
     
-    // Arrays  
+    // Defining the Arrays  
     double* local_data, *bin_limits;           
     int* local_hist, *global_hist;
     global_hist = NULL;             
@@ -42,8 +42,11 @@ int main(int argn, char* argv []){
     get_bin_limits(my_rank, bin_limits, min_meas, max_meas, bin_count);
     bin_data( local_data, bin_limits, local_hist, local_count, bin_count);
 
+    // Accumulating the local histograms into a single global histogram
     MPI_Reduce(local_hist, global_hist, bin_count, MPI_INT, MPI_SUM,0, MPI_COMM_WORLD);
     int j;
+
+    // Printing out the bin maximum values and the final histogram results
     if (my_rank==0){
         printf("bin_maxes: ");
         for ( j=1; j<bin_count+1;j++){
@@ -72,6 +75,7 @@ void Get_input(int my_rank, int comm_sz, int argn, char** argv, int* bin_count_p
         *max_meas_p = strtof(argv[3], NULL);
         *data_count_p = strtol(argv[4], NULL, 10);
     }
+    // Disseminating the input data from rank 0 to every rank
     MPI_Bcast(bin_count_p, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(data_count_p, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(min_meas_p, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -83,8 +87,8 @@ void Generate_data(int my_rank, int comm_sz , double** local_data_p,int *local_c
     double* full_data =NULL;
     int i;
     if (my_rank==0){
-        full_data = malloc(data_count*sizeof(double));
         srand(100);
+        full_data = malloc(data_count*sizeof(double));
         for ( i=0; i<data_count; i++){
             full_data[i] = min_meas + (max_meas-min_meas)*(double)rand()/(RAND_MAX);
         }
@@ -107,7 +111,7 @@ void Generate_data(int my_rank, int comm_sz , double** local_data_p,int *local_c
     // Scatterv is capable of distributing variable sized chunks to different ranks.
     MPI_Scatterv(full_data, scounts,displacements,  MPI_DOUBLE, *local_data_p, *local_count_p, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-    // MPI_Scatter(full_data, *local_count_p,  MPI_DOUBLE, local_data, *local_count_p, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    // Free memory after use
     free(displacements);
     free(scounts);
     if (my_rank == 0) free(full_data);
